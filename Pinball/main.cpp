@@ -367,6 +367,10 @@ void skybox(float altura, float largo, float profundidad)
 
 
 void mesa_pinball() {
+	glMaterialfv(GL_FRONT, GL_AMBIENT, madera_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, madera_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, madera_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, madera_shininess);
 	glPushMatrix();
 		glRotatef(9.462, 1, 0, 0);
 		glPushMatrix();
@@ -466,10 +470,6 @@ void display(void)   // Creamos la funcion donde se dibuja
 			glPopMatrix();
 			glPushMatrix();
 				glTranslatef(0,90,0);
-				glMaterialfv(GL_FRONT, GL_AMBIENT, madera_ambient);
-				glMaterialfv(GL_FRONT, GL_DIFFUSE, madera_diffuse);
-				glMaterialfv(GL_FRONT, GL_SPECULAR, madera_specular);
-				glMaterialfv(GL_FRONT, GL_SHININESS, madera_shininess);
 				mesa_pinball();
 			glPopMatrix();
 			glColor3f(1.0,1.0,1.0);
