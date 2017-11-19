@@ -31,10 +31,16 @@ GLfloat madera_specular[] = { 0.0f,0.16f,0.17f,1.0f };			// Specular color
 GLfloat madera_shininess[] = { 50 };							// 1 to greatest
 
 //canica 1
-GLfloat canicaUno_ambient[] = { 0.0f,0.0f,0.16f,1.0f };			// Color background
-GLfloat canicaUno_diffuse[] = { 0.5f,0.6f,0.75f,1.0f };			// Object Color main
-GLfloat canicaUno_specular[] = { 0.0f,0.16f,0.17f,1.0f };			// Specular color
-GLfloat canicaUno_shininess[] = { 50 };
+GLfloat canicaUno_ambient[] = { 0.24725f, 0.1995f, 0.0745f, 1.0f };
+GLfloat canicaUno_diffuse[] = { 0.75164f, 0.60648f, 0.22648f, 1.0f };
+GLfloat canicaUno_specular[] = { 0.628281f, 0.555802f, 0.366065f, 1.0f };
+GLfloat canicaUno_shininess[] = { 51.2f };
+
+//canica 2
+GLfloat canicaDos_ambient[] = { 0.0f,0.05f,0.0f,1.0f };
+GLfloat canicaDos_diffuse[] = { 0.4f,0.5f,0.4f,1.0f };
+GLfloat canicaDos_specular[] = { 0.04f,0.7f,0.04f,1.0f };
+GLfloat canicaDos_shininess[] = { 10.0f };
 
 //Iluminación
 
@@ -48,10 +54,6 @@ GLfloat light_specular[] = { 0.5, 0.5, 0.5, 1.0 };
 	GLfloat light1_specular[] = { 1.0, 0.0, 0.0, 0.0 };
 	GLfloat Pos[] = { 0.0, 90.0, 0.0, 0.0 };
 	GLfloat PosUno[] = { 0.0, 0.0, 0.0, 1.0 };
-
-
-
-
 
 //Texturas
 CTexture skybox1;
@@ -383,12 +385,72 @@ void skybox(float altura, float largo, float profundidad)
 	glEnd();
 }
 
-void esfera(GLfloat radio, int meridianos, int paralelos, GLuint text)
+void canica_uno(GLfloat radio, int meridianos, int paralelos, GLuint text)
 {
-	/*glMaterialfv(GL_FRONT, GL_AMBIENT, canicaUno_ambient);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, canicaUno_ambient);
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, canicaUno_diffuse);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, canicaUno_specular);
-	glMaterialfv(GL_FRONT, GL_SHININESS, canicaUno_shininess);*/
+	glMaterialfv(GL_FRONT, GL_SHININESS, canicaUno_shininess);
+
+	GLdouble theta, phi;
+
+	float ctext_s = 1.0 / meridianos;
+	float ctext_t = 1.0 / paralelos;
+
+	glBindTexture(GL_TEXTURE_2D, text);   // choose the texture to use.
+
+	float v1[] = { 0.0, 0.0, 0.0 };
+	float v2[] = { 0.0, 0.0, 0.0 };
+	float v3[] = { 0.0, 0.0, 0.0 };
+	float v4[] = { 0.0, 0.0, 0.0 };
+	int i, j;
+	float angulom, angulop;
+	angulom = 2 * 3.141592654 / meridianos;
+	angulop = 3.141592654 / paralelos;
+	for (i = 0; i<meridianos; i++)
+	{
+		for (j = 0; j<paralelos; j++)
+		{
+			v1[0] = radio*cos(angulom*i)*sin(angulop*j);
+			v1[1] = radio*cos(angulop*j);
+			v1[2] = radio*sin(angulom*i)*sin(angulop*j);
+
+			v2[0] = radio*cos(angulom*i)*sin(angulop*(j + 1));
+			v2[1] = radio*cos(angulop*(j + 1));
+			v2[2] = radio*sin(angulom*i)*sin(angulop*(j + 1));
+
+			v3[0] = radio*cos(angulom*(i + 1))*sin(angulop*(j + 1));
+			v3[1] = radio*cos(angulop*(j + 1));
+			v3[2] = radio*sin(angulom*(i + 1))*sin(angulop*(j + 1));
+
+			v4[0] = radio*cos(angulom*(i + 1))*sin(angulop*j);
+			v4[1] = radio*cos(angulop*j);
+			v4[2] = radio*sin(angulom*(i + 1))*sin(angulop*j);
+
+			glBegin(GL_POLYGON);
+			glNormal3fv(v1);
+			glTexCoord2f(ctext_s*i, -ctext_t*j);
+			glVertex3fv(v1);
+			glNormal3fv(v2);
+			glTexCoord2f(ctext_s*i, -ctext_t*(j + 1));
+			glVertex3fv(v2);
+			glNormal3fv(v3);
+			glTexCoord2f(ctext_s*(i + 1), -ctext_t*(j + 1));
+			glVertex3fv(v3);
+			glNormal3fv(v4);
+			glTexCoord2f(ctext_s*(i + 1), -ctext_t*j);
+			glVertex3fv(v4);
+			glEnd();
+		}
+	}
+}
+
+void canica_dos(GLfloat radio, int meridianos, int paralelos, GLuint text)
+{
+	glMaterialfv(GL_FRONT, GL_AMBIENT, canicaDos_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, canicaDos_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, canicaDos_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, canicaDos_shininess);
 
 	GLdouble theta, phi;
 
@@ -564,10 +626,9 @@ void display(void)   // Creamos la funcion donde se dibuja
 			glPushMatrix();
 				glTranslatef(0,90,0);
 				mesa_pinball();
-				//esfera(5,30,30,0);
-				//glTranslatef(0, 90, 0);
-				luces();
-				esfera(5,30,30,0);
+				glTranslatef(0, 21.5, 0);
+				canica_dos(0.5, 30, 30, 0);
+				//luces();
 				glPopMatrix();
 			glColor3f(1.0,1.0,1.0);
 		glPopMatrix(); 
