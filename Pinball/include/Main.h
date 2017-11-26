@@ -10,5 +10,16 @@
 //#include "glaux.h"			// Archivo de cabecera para la libreria Glaux
 #include "GL\glut.h"			// Archivo de cabecera para la libreria Glut
 
+#ifndef MODELLOADER
+#define MODELLOADER
+
+#include <iostream>
+#include <vector>
+#include <glm\glm.hpp>
+#include <string>
+#include<stdio.h>
+
+//#include <fstream>
+
 
 #endif 

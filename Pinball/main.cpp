@@ -10,6 +10,20 @@
 #include "Camera.h"
 //#include <cctype>
 
+#include <windows.h>
+#include <iostream>
+#include <fstream>
+#include <stdio.h>
+#include <string.h>
+
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <cmath>
+using namespace std;
+
 const float PI = 3.14159265359;
 float red[3] = { 1.0, 0.0, 0.0 };
 float green[3] = { 0.0,1.0,0.0 };
@@ -42,6 +56,13 @@ GLfloat canicaDos_diffuse[] = { 0.4f,0.5f,0.4f,1.0f };
 GLfloat canicaDos_specular[] = { 0.04f,0.7f,0.04f,1.0f };
 GLfloat canicaDos_shininess[] = { 10.0f };
 
+//piedras
+GLfloat piedras_ambient[] = { 0.0f,0.0f,0.0f,1.0f };
+GLfloat piedras_diffuse[] = { 0.55f,0.55f,0.55f,1.0f };
+GLfloat piedras_specular[] = { 0.70f,0.70f,0.70f,1.0f };
+GLfloat piedras_shininess[] = { 32.0f };
+
+
 //Iluminación
 
 GLfloat light_ambient[] = { 0.5, 0.5, 0.5, 1.0 };
@@ -50,7 +71,7 @@ GLfloat light_specular[] = { 0.5, 0.5, 0.5, 1.0 };
 
 //luz_uno
 GLfloat light1_ambient[] = { 0.0, 0.0, 0.0, 0.0 };
-GLfloat light1_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
+GLfloat light1_diffuse[] = { 0.0, 0.8, 0.0, 1.0 };
 GLfloat light1_specular[] = { 1.0, 0.0, 0.0, 0.0 };
 GLfloat Pos[] = { 0.0, 90.0, 0.0, 1.0 };
 GLfloat PosUno[] = { 0.0, 0.0, 0.0, 1.0 };
@@ -505,6 +526,66 @@ void canica_dos(GLfloat radio, int meridianos, int paralelos, GLuint text)
 	}
 }
 
+void piedra(GLfloat radio, int meridianos, int paralelos, GLuint text)
+{
+	glMaterialfv(GL_FRONT, GL_AMBIENT, piedras_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, piedras_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, piedras_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, piedras_shininess);
+
+	GLdouble theta, phi;
+
+	float ctext_s = 1.0 / meridianos;
+	float ctext_t = 1.0 / paralelos;
+
+	glBindTexture(GL_TEXTURE_2D, text);   // choose the texture to use.
+
+	float v1[] = { 0.0, 0.0, 0.0 };
+	float v2[] = { 0.0, 0.0, 0.0 };
+	float v3[] = { 0.0, 0.0, 0.0 };
+	float v4[] = { 0.0, 0.0, 0.0 };
+	int i, j;
+	float angulom, angulop;
+	angulom = 2 * 3.141592654 / meridianos;
+	angulop = 3.141592654 / paralelos;
+	for (i = 0; i<meridianos; i++)
+	{
+		for (j = 0; j<paralelos; j++)
+		{
+			v1[0] = radio*cos(angulom*i)*sin(angulop*j);
+			v1[1] = radio*cos(angulop*j);
+			v1[2] = radio*sin(angulom*i)*sin(angulop*j);
+
+			v2[0] = radio*cos(angulom*i)*sin(angulop*(j + 1));
+			v2[1] = radio*cos(angulop*(j + 1));
+			v2[2] = radio*sin(angulom*i)*sin(angulop*(j + 1));
+
+			v3[0] = radio*cos(angulom*(i + 1))*sin(angulop*(j + 1));
+			v3[1] = radio*cos(angulop*(j + 1));
+			v3[2] = radio*sin(angulom*(i + 1))*sin(angulop*(j + 1));
+
+			v4[0] = radio*cos(angulom*(i + 1))*sin(angulop*j);
+			v4[1] = radio*cos(angulop*j);
+			v4[2] = radio*sin(angulom*(i + 1))*sin(angulop*j);
+
+			glBegin(GL_POLYGON);
+			glNormal3fv(v1);
+			glTexCoord2f(ctext_s*i, -ctext_t*j);
+			glVertex3fv(v1);
+			glNormal3fv(v2);
+			glTexCoord2f(ctext_s*i, -ctext_t*(j + 1));
+			glVertex3fv(v2);
+			glNormal3fv(v3);
+			glTexCoord2f(ctext_s*(i + 1), -ctext_t*(j + 1));
+			glVertex3fv(v3);
+			glNormal3fv(v4);
+			glTexCoord2f(ctext_s*(i + 1), -ctext_t*j);
+			glVertex3fv(v4);
+			glEnd();
+		}
+	}
+}
+
 void foco(GLfloat radio, int meridianos, int paralelos, GLuint text)
 {
 	GLdouble theta, phi;
@@ -653,6 +734,24 @@ void mesa_pinball() {
 	glPopMatrix();
 }
 
+void piedras() {
+	glPushMatrix();
+		glTranslatef(0, 21.5, 0);
+		glScalef(1, 0.9, 1.5);
+		piedra(0.5, 30, 30, 0);
+		glPushMatrix();
+			glTranslatef(0, 0.9, 0);
+			glScalef(2, 0.9, 1);
+			piedra(0.5, 30, 30, 0);
+			glPushMatrix();
+				glTranslatef(0, 0.8, 0);
+				glScalef(2, 0.8, 2);
+				piedra(0.5, 30, 30, 0);
+			glPopMatrix();
+		glPopMatrix();
+	glPopMatrix();
+}
+
 
 void display(void)   // Creamos la funcion donde se dibuja
 {
@@ -669,9 +768,8 @@ void display(void)   // Creamos la funcion donde se dibuja
 		gluLookAt(	objCamera.mPos.x,  objCamera.mPos.y,  objCamera.mPos.z,	
 					objCamera.mView.x, objCamera.mView.y, objCamera.mView.z,	
 					objCamera.mUp.x,   objCamera.mUp.y,   objCamera.mUp.z);
-		/*luces();
-		glTranslatef(0, 130, 0);
-		foco(5, 30, 30, 0);*/
+
+
 
 		glPushMatrix();		
 			glPushMatrix(); //Creamos cielo
@@ -683,13 +781,16 @@ void display(void)   // Creamos la funcion donde se dibuja
 			glPushMatrix();
 				glTranslatef(0,90,0);
 				mesa_pinball();
-				//glTranslatef(0, 21.5, 0);
+				piedras();
+
 				//canica_uno(0.5, 30, 30, 0);
 				//canica_dos(0.5, 30, 30, 0);
+				glPushMatrix();
+					luces();
+					glTranslatef(0, 130, 0);
+					foco(5, 30, 30, 0);
+				glPopMatrix();
 
-				luces();
-				glTranslatef(0, 130, 0);
-				foco(5, 30, 30, 0);
 
 				glPopMatrix();
 			glColor3f(1.0,1.0,1.0);
