@@ -62,6 +62,12 @@ GLfloat piedras_diffuse[] = { 0.55f,0.55f,0.55f,1.0f };
 GLfloat piedras_specular[] = { 0.70f,0.70f,0.70f,1.0f };
 GLfloat piedras_shininess[] = { 32.0f };
 
+//vidrio
+GLfloat vidrio_ambient[] = { 0.0f,0.28f,0.83f,0.4f };
+GLfloat vidrio_diffuse[] = { 0.17f,0.64f,0.32f,0.4f };
+GLfloat vidrio_specular[] = { 0.07f,0.32f,0.76f,0.4f };
+GLfloat vidrio_shininess[] = { 47.0f };
+
 
 //Iluminación
 
@@ -86,6 +92,9 @@ CTexture fondo;
 CCamera objCamera;	//Create objet Camera
 
 GLfloat g_lookupdown = 0.0f;    // Look Position In The Z-Axis (NEW) 
+
+//flags
+bool flag_luz_uno = true;
 
 void InitGL(void)     // Inicializamos parametros
 {
@@ -136,6 +145,7 @@ void InitGL(void)     // Inicializamos parametros
 //Primitivas 
 void prisma()
 {
+	
 	GLfloat vertice[8][3] = {
 		{ 0.5 ,-0.5, 0.5 },    //Coordenadas Vértice 0 V0
 		{ -0.5 ,-0.5, 0.5 },    //Coordenadas Vértice 1 V1
@@ -246,6 +256,9 @@ void prisma_tr() {
 
 void prisma(GLint texture)
 {
+	
+
+
 	GLfloat vertice[8][3] = {
 		{ 0.5 ,-0.5, 0.5 },    //Coordenadas Vértice 0 V0
 		{ -0.5 ,-0.5, 0.5 },    //Coordenadas Vértice 1 V1
@@ -257,21 +270,36 @@ void prisma(GLint texture)
 		{ -0.5 ,0.5, 0.5 },    //Coordenadas Vértice 7 V7
 	};
 
+	GLfloat verticeDos[8][3] = {
+		{ 0.5 ,-0.5, 0.5 },    //Coordenadas Vértice 0 V0
+		{ -0.5 ,-0.5, 0.5 },    //Coordenadas Vértice 1 V1
+		{ -0.5 ,-0.5, -0.5 },    //Coordenadas Vértice 2 V2
+		{ 0.5 ,-0.2, -0.5 },    //Coordenadas Vértice 3 V3
+		{ 0.5 ,0.2, 0.5 },    //Coordenadas Vértice 4 V4
+		{ 0.5 ,0.2, -0.5 },    //Coordenadas Vértice 5 V5
+		{ -0.5 ,0.2, -0.5 },    //Coordenadas Vértice 6 V6
+		{ -0.5 ,0.2, 0.5 },    //Coordenadas Vértice 7 V7
+	};
+
 	glPushMatrix();
 		glDisable(GL_LIGHTING);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glBegin(GL_POLYGON);  //Top
 		glNormal3f(0.0f, 1.0f, 0.0f);
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glTexCoord2f(1.0f, 0.0f); glVertex3fv(vertice[4]);
-		glTexCoord2f(1.0f, 1.0f); glVertex3fv(vertice[5]);
-		glTexCoord2f(0.0f, 1.0f); glVertex3fv(vertice[6]);
-		glTexCoord2f(0.0f, 0.0f); glVertex3fv(vertice[7]);
+		
+		glTexCoord2f(1.0f, 0.0f); glVertex3fv(verticeDos[4]);
+		glTexCoord2f(1.0f, 1.0f); glVertex3fv(verticeDos[5]);
+		glTexCoord2f(0.0f, 1.0f); glVertex3fv(verticeDos[6]);
+		glTexCoord2f(0.0f, 0.0f); glVertex3fv(verticeDos[7]);
 		glEnd();
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
 	
+	
+
+
 	glBegin(GL_POLYGON);	//Front	
 	glNormal3f(0.0f, 0.0f, 1.0f);
 	glVertex3fv(vertice[0]);
@@ -588,6 +616,11 @@ void piedra(GLfloat radio, int meridianos, int paralelos, GLuint text)
 
 void foco(GLfloat radio, int meridianos, int paralelos, GLuint text)
 {
+	glMaterialfv(GL_FRONT, GL_AMBIENT, madera_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, madera_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, madera_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, madera_shininess);
+
 	GLdouble theta, phi;
 
 	float ctext_s = 1.0 / meridianos;
@@ -651,6 +684,7 @@ void luces() {
 	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, PosUno);
 
 	glEnable(GL_LIGHT2);
+	//glDisable(GL_LIGHT2);
 }
 
 void mesa_pinball() {
@@ -734,6 +768,39 @@ void mesa_pinball() {
 	glPopMatrix();
 }
 
+void vidrio() {
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, vidrio_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, vidrio_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, vidrio_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, vidrio_shininess);
+
+	GLfloat vertice[8][3] = {
+					{ 0.5 ,-0.5, 0.5 },    //Coordenadas Vértice 0 V0
+					{ -0.5 ,-0.5, 0.5 },    //Coordenadas Vértice 1 V1
+					{ -0.5 ,-0.5, -0.5 },    //Coordenadas Vértice 2 V2
+					{ 0.5 ,-0.5, -0.5 },    //Coordenadas Vértice 3 V3
+					{ 0.5 ,0.5, 0.5 },    //Coordenadas Vértice 4 V4
+					{ 0.5 ,0.5, -0.5 },    //Coordenadas Vértice 5 V5
+					{ -0.5 ,0.5, -0.5 },    //Coordenadas Vértice 6 V6
+					{ -0.5 ,0.5, 0.5 },    //Coordenadas Vértice 7 V7
+				};
+				glRotatef(9.462, 1, 0, 0);
+				glScalef(60, 41.099, 118.366);
+				glPushMatrix();
+					glBegin(GL_POLYGON);	//Front	
+					glNormal3f(0.0f, 0.0f, 1.0f);
+					glVertex3fv(vertice[4]);
+					glVertex3fv(vertice[5]);
+					glVertex3fv(vertice[6]);
+					glVertex3fv(vertice[7]);
+					glEnd();
+				glPopMatrix();
+				glDisable(GL_BLEND);
+}
+
 void piedras() {
 	glPushMatrix();
 		glTranslatef(0, 21.5, 0);
@@ -781,7 +848,10 @@ void display(void)   // Creamos la funcion donde se dibuja
 			glPushMatrix();
 				glTranslatef(0,90,0);
 				mesa_pinball();
+
 				piedras();
+
+
 
 				//canica_uno(0.5, 30, 30, 0);
 				//canica_dos(0.5, 30, 30, 0);
@@ -790,6 +860,9 @@ void display(void)   // Creamos la funcion donde se dibuja
 					glTranslatef(0, 130, 0);
 					foco(5, 30, 30, 0);
 				glPopMatrix();
+
+				vidrio(); //poner al final
+
 
 
 				glPopMatrix();
@@ -845,6 +918,17 @@ void keyboard(unsigned char key, int x, int y)  // Create Keyboard Function
 	case 'd':
 	case 'D':
 		objCamera.Strafe_Camera(CAMERASPEED + 0.4);
+		break;
+
+	case 'z':
+	case 'Z':
+		if (flag_luz_uno == true)
+		{
+
+			cout << "Hola Mundo" << endl;
+			//flag_luz_uno = false;
+		}
+		
 		break;
 
 	case 27:        // Cuando Esc es presionado...
