@@ -22,6 +22,9 @@
 #include <string>
 #include <vector>
 #include <cmath>
+
+#include "cmodel/CModel.h"
+
 using namespace std;
 
 const float PI = 3.14159265359;
@@ -96,6 +99,10 @@ GLfloat g_lookupdown = 0.0f;    // Look Position In The Z-Axis (NEW)
 //flags
 bool flag_luz_uno = true;
 
+//3ds
+CModel hongo3d;
+CModel pajaro3d;
+
 void InitGL(void)     // Inicializamos parametros
 {
 
@@ -140,6 +147,10 @@ void InitGL(void)     // Inicializamos parametros
 	fondo.ReleaseImage();
 
 	objCamera.Position_Camera(0, 200, 100, 0, 100, 0, 0, 1,0);
+
+	//3ds
+	hongo3d._3dsLoad("3ds/boletus.3ds");
+	pajaro3d._3dsLoad("3ds/CHICKDEE.3DS");
 }
 
 //Primitivas 
@@ -675,15 +686,19 @@ void foco(GLfloat radio, int meridianos, int paralelos, GLuint text)
 }
 
 //luces
-void luces() {
-	glLightfv(GL_LIGHT2, GL_AMBIENT, light1_ambient);
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, light1_diffuse);
-	glLightfv(GL_LIGHT2, GL_SPECULAR, light1_specular);
+void luz_uno() {
+	glPushMatrix();	
+		glLightfv(GL_LIGHT2, GL_AMBIENT, light1_ambient);
+		glLightfv(GL_LIGHT2, GL_DIFFUSE, light1_diffuse);
+		glLightfv(GL_LIGHT2, GL_SPECULAR, light1_specular);
 
-	glLightfv(GL_LIGHT2, GL_POSITION, Pos);
-	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, PosUno);
+		glLightfv(GL_LIGHT2, GL_POSITION, Pos);
+		glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, PosUno);
 
-	glEnable(GL_LIGHT2);
+		glEnable(GL_LIGHT2);
+		glTranslatef(0, 130, 0);
+		foco(5, 30, 30, 0);
+	glPopMatrix();
 	//glDisable(GL_LIGHT2);
 }
 
@@ -801,9 +816,9 @@ void vidrio() {
 				glDisable(GL_BLEND);
 }
 
-void piedras() {
+void piedras_uno() {
 	glPushMatrix();
-		glTranslatef(0, 21.5, 0);
+		glTranslatef(-20, 3, 35);
 		glScalef(1, 0.9, 1.5);
 		piedra(0.5, 30, 30, 0);
 		glPushMatrix();
@@ -819,15 +834,82 @@ void piedras() {
 	glPopMatrix();
 }
 
+void piedras_dos() {
+	glPushMatrix();
+		glTranslatef(10, 13, -25);
+		glScalef(1, 0.9, 1.5);
+		piedra(0.5, 30, 30, 0);
+			glPushMatrix();
+				glTranslatef(0, 0.9, 0);
+				glScalef(2, 0.9, 1);
+				piedra(0.5, 30, 30, 0);
+				glPushMatrix();
+				glTranslatef(0, 0.8, 0);
+				glScalef(2, 0.8, 2);
+				piedra(0.5, 30, 30, 0);
+			glPopMatrix();
+		glPopMatrix();
+	glPopMatrix();
+}
+
+//3ds
+void hongo_uno() {
+	glEnable(GL_COLOR_MATERIAL);
+	glColor3f(0.5, 0.1, 0.9);
+
+	glPushMatrix();
+		glScalef(0.05, 0.05, 0.05);
+		glTranslatef(130, 80, 500);
+		hongo3d.GLrender(NULL, _SHADED, 1.0);
+	glPopMatrix();
+
+	glDisable(GL_COLOR_MATERIAL);
+}
+
+void hongo_dos() {
+	glEnable(GL_COLOR_MATERIAL);
+	glColor3f(0.05, 0.8, 0.8);
+    glPushMatrix();
+		glScalef(0.05, 0.05, 0.05);
+		glTranslatef(-260, 215, -300);
+		hongo3d.GLrender(NULL, _SHADED, 1.0);
+	glPopMatrix();
+
+	glDisable(GL_COLOR_MATERIAL);
+}
+
+void pajaro_uno() {
+	glEnable(GL_COLOR_MATERIAL);
+	glColor3f(0.5, 0.05, 0.05);
+	
+	glPushMatrix();
+		glScalef(200, 200, 200);
+		glTranslatef(0, 0.022, 0.04);
+		pajaro3d.GLrender(NULL, _SHADED, 1.0);
+	glPopMatrix();
+
+	glDisable(GL_COLOR_MATERIAL);
+}
+
+void pajaro_dos() {
+	glEnable(GL_COLOR_MATERIAL);
+	glColor3f(0.9, 0.9, 0.05);
+
+	glPushMatrix();
+	glScalef(200, 200, 200);
+	glRotatef(0, 0, -180, 1);
+	glTranslatef(-0.1, 0.065, -0.2);
+	pajaro3d.GLrender(NULL, _SHADED, 1.0);
+	glPopMatrix();
+
+	glDisable(GL_COLOR_MATERIAL);
+}
 
 void display(void)   // Creamos la funcion donde se dibuja
 {
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	glLoadIdentity();
-
-	
-
 	
 	glPushMatrix();
 		glRotatef(g_lookupdown,1.0f,0,0);
@@ -835,8 +917,6 @@ void display(void)   // Creamos la funcion donde se dibuja
 		gluLookAt(	objCamera.mPos.x,  objCamera.mPos.y,  objCamera.mPos.z,	
 					objCamera.mView.x, objCamera.mView.y, objCamera.mView.z,	
 					objCamera.mUp.x,   objCamera.mUp.y,   objCamera.mUp.z);
-
-
 
 		glPushMatrix();		
 			glPushMatrix(); //Creamos cielo
@@ -848,22 +928,27 @@ void display(void)   // Creamos la funcion donde se dibuja
 			glPushMatrix();
 				glTranslatef(0,90,0);
 				mesa_pinball();
+				
+				piedras_uno();
+				piedras_dos();
 
-				piedras();
+				hongo_uno();
+				hongo_dos();
 
-
+				pajaro_uno();
+				pajaro_dos();
 
 				//canica_uno(0.5, 30, 30, 0);
 				//canica_dos(0.5, 30, 30, 0);
-				glPushMatrix();
-					luces();
-					glTranslatef(0, 130, 0);
-					foco(5, 30, 30, 0);
-				glPopMatrix();
-
+				
+				if (flag_luz_uno == true)
+				{
+					luz_uno();
+				}
+				else {
+					glDisable(GL_LIGHT2);
+				}
 				vidrio(); //poner al final
-
-
 
 				glPopMatrix();
 			glColor3f(1.0,1.0,1.0);
@@ -924,11 +1009,12 @@ void keyboard(unsigned char key, int x, int y)  // Create Keyboard Function
 	case 'Z':
 		if (flag_luz_uno == true)
 		{
-
-			cout << "Hola Mundo" << endl;
-			//flag_luz_uno = false;
+			flag_luz_uno = false;
 		}
-		
+		else
+		{
+			flag_luz_uno = true;
+		}
 		break;
 
 	case 27:        // Cuando Esc es presionado...
