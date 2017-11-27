@@ -71,9 +71,13 @@ GLfloat vidrio_diffuse[] = { 0.17f,0.64f,0.32f,0.4f };
 GLfloat vidrio_specular[] = { 0.07f,0.32f,0.76f,0.4f };
 GLfloat vidrio_shininess[] = { 47.0f };
 
+//flik
+GLfloat flik_ambient[] = { 0.0f,0.33f,0.33f,1.0f };
+GLfloat flik_diffuse[] = { 0.09f,0.52f,1.0f,1.0f };
+GLfloat flik_specular[] = { 0.37f,0.56f,0.78f,1.0f };
+GLfloat flik_shininess[] = { 65.0f };
 
 //Iluminación
-
 GLfloat light_ambient[] = { 0.5, 0.5, 0.5, 1.0 };
 GLfloat light_diffuse[] = { 0.5, 0.5, 0.5, 1.0 };
 GLfloat light_specular[] = { 0.5, 0.5, 0.5, 1.0 };
@@ -572,6 +576,62 @@ void canica_dos(GLfloat radio, int meridianos, int paralelos, GLuint text)
 	}
 }
 
+void esfera(GLfloat radio, int meridianos, int paralelos, GLuint text)
+{
+	GLdouble theta, phi;
+
+	float ctext_s = 1.0 / meridianos;
+	float ctext_t = 1.0 / paralelos;
+
+	glBindTexture(GL_TEXTURE_2D, text);   // choose the texture to use.
+
+	float v1[] = { 0.0, 0.0, 0.0 };
+	float v2[] = { 0.0, 0.0, 0.0 };
+	float v3[] = { 0.0, 0.0, 0.0 };
+	float v4[] = { 0.0, 0.0, 0.0 };
+	int i, j;
+	float angulom, angulop;
+	angulom = 2 * 3.141592654 / meridianos;
+	angulop = 3.141592654 / paralelos;
+	for (i = 0; i<meridianos; i++)
+	{
+		for (j = 0; j<paralelos; j++)
+		{
+			v1[0] = radio*cos(angulom*i)*sin(angulop*j);
+			v1[1] = radio*cos(angulop*j);
+			v1[2] = radio*sin(angulom*i)*sin(angulop*j);
+
+			v2[0] = radio*cos(angulom*i)*sin(angulop*(j + 1));
+			v2[1] = radio*cos(angulop*(j + 1));
+			v2[2] = radio*sin(angulom*i)*sin(angulop*(j + 1));
+
+			v3[0] = radio*cos(angulom*(i + 1))*sin(angulop*(j + 1));
+			v3[1] = radio*cos(angulop*(j + 1));
+			v3[2] = radio*sin(angulom*(i + 1))*sin(angulop*(j + 1));
+
+			v4[0] = radio*cos(angulom*(i + 1))*sin(angulop*j);
+			v4[1] = radio*cos(angulop*j);
+			v4[2] = radio*sin(angulom*(i + 1))*sin(angulop*j);
+
+			glBegin(GL_POLYGON);
+			glNormal3fv(v1);
+			glTexCoord2f(ctext_s*i, -ctext_t*j);
+			glVertex3fv(v1);
+			glNormal3fv(v2);
+			glTexCoord2f(ctext_s*i, -ctext_t*(j + 1));
+			glVertex3fv(v2);
+			glNormal3fv(v3);
+			glTexCoord2f(ctext_s*(i + 1), -ctext_t*(j + 1));
+			glVertex3fv(v3);
+			glNormal3fv(v4);
+			glTexCoord2f(ctext_s*(i + 1), -ctext_t*j);
+			glVertex3fv(v4);
+			glEnd();
+		}
+	}
+}
+
+
 void piedra(GLfloat radio, int meridianos, int paralelos, GLuint text)
 {
 	glMaterialfv(GL_FRONT, GL_AMBIENT, piedras_ambient);
@@ -928,6 +988,143 @@ void pajaro_dos() {
 	glDisable(GL_COLOR_MATERIAL);
 }
 
+void flik() {
+	glMaterialfv(GL_FRONT, GL_AMBIENT, flik_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, flik_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, flik_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, flik_shininess);
+
+	float transZ = -5.0f;
+	float transX = 0.0f;
+	float transY = 0.0f;
+	float rotX = 0.0f;
+	float rotY = 0.0f;
+	float rotY1 = 0.0f;
+	float rotY3 = 0.0f;
+	float rotY4 = 0.0f;
+	float rotY7 = 0.0f;
+	float rotX1 = 0.0f;
+	float rotY10 = 0.0f;
+	float rotY14 = 0.0f;
+
+	glPushMatrix();
+	glScalef(0.3, 0.3, 0.3);
+	glTranslatef(70.0, 4.5, 190.0);
+
+	// Cuerpo
+	glPushMatrix();
+
+	glTranslatef(-2.0f, 0.0f, transZ);
+
+	glPushMatrix(); //brazo der
+	glTranslatef(0.3f, 0.0f, 0.0);
+	glRotatef(rotY, 0, 1, 0);
+	glTranslatef(1.05f, 1.5f, -0.5f);
+
+	glPushMatrix();//antebrazo der
+	glTranslatef(1.0f, 0.0f, 0.0);
+	glRotatef(rotY1, 0, 1, 0);
+	glTranslatef(1.0f, 0.0f, 0.0f);
+	glScalef(2.0, .75, 2.0);
+	glRotatef(90, 1, 0, 0);
+	prisma();
+	glPopMatrix();
+
+	glScalef(2.0, 1.0, 2.0);
+	glRotatef(90, 1, 0, 0);
+	prisma();
+	glPopMatrix(); // Fin brazo der
+
+	glPushMatrix(); //brazo izq
+	glTranslatef(-0.3f, 0.0f, 0.0);
+	glRotatef(rotY3, 0, 1, 0);
+	glTranslatef(-1.05f, 1.5f, -0.5f);
+
+	glPushMatrix();//antebrazo izq
+	glTranslatef(-1.0f, 0.0f, 0.0);
+	glRotatef(rotY4, 0, 1, 0);
+	glTranslatef(-1.0f, 0.0f, 0.0f);
+	glScalef(2.0, .75, 2.0);
+	glRotatef(180, 1, 0, 0);
+	prisma();
+	glPopMatrix();
+
+
+	glScalef(2.0, 1.0, 2.0);
+	glRotatef(180, 1, 0, 0);
+	prisma();
+	glPopMatrix(); // Fin brazo izq
+
+	glPushMatrix(); //muslo der
+	glTranslatef(1.5f, 0.0f, 0.0);
+	glRotatef(rotX, 1, 0, 0);
+	glTranslatef(-0.5f, -3.5f, -0.5f);
+	glRotatef(270, 0, 0, 1);
+
+	glPushMatrix();//rodilla der
+	glTranslatef(1.0f, 0.0f, 0.0);
+	glRotatef(rotY7, 0, 1, 0);
+	glTranslatef(1.0f, 0.0f, 0.0f);
+	glScalef(2.0, .75, 2.0);
+	glRotatef(270, 1, 0, 0);
+	prisma();
+	glPopMatrix();
+
+
+	glScalef(2.0, 1.0, 2.0);
+	glRotatef(270, 1, 0, 0);
+	prisma();
+	glPopMatrix(); // Fin pierna der
+
+	glPushMatrix(); //muslo izq
+	glTranslatef(1.5f, 0.0f, 0.0);
+	glRotatef(rotX1, 1, 0, 0);
+	glTranslatef(-2.5f, -3.5f, -0.5f);
+	glRotatef(270, 0, 0, 1);
+
+	glPushMatrix();//rodilla izq
+	glTranslatef(1.0f, 0.0f, 0.0);
+	glRotatef(rotY10, 0, 1, 0);
+	glTranslatef(1.0f, 0.0f, 0.0f);
+	glScalef(2.0, .75, 2.0);
+	glRotatef(270, 1, 0, 0);
+	prisma();
+	glPopMatrix();
+
+
+	glScalef(2.0, 1.0, 2.0);
+	glRotatef(270, 1, 0, 0);
+	prisma();
+	glPopMatrix(); // Fin pierna izq
+
+	glPushMatrix(); //Cara
+	glRotatef(rotY14, 0, 1, 0);  //Rotamiento de cabeza
+	glTranslatef(0.0f, 3.5f, -0.4f);
+	/*glRotatef(90, 0, 0, 1);
+	glScalef(1.0, 1.0, 1.0);
+	glRotatef(90, 0, 1, 0);*/
+	//prisma();
+	esfera(1, 30, 30, 0);
+	glScalef(0.2, 2.5, 0.2);
+	glTranslatef(3.0f, 0.0f, 0.0f);
+	cilindro(30);
+	glTranslatef(-3.0f, 0.0f, 0.0f);
+	cilindro(30);
+
+	glPopMatrix(); // Fin cara
+	glTranslatef(0.0f, -2.0f, 0.0f);
+	glScalef(1, 5, 1);
+	cilindro(30);           // Cuerpo
+	glPopMatrix(); // Fin cuerpo 
+
+	glPushMatrix(); // Fin cuerpo 
+	glScalef(1, 1, 2);
+	glTranslatef(-2.0f, -2.0f, -2.0f);
+	esfera(1, 30, 30, 0);
+	glPopMatrix(); 
+	glPopMatrix();
+}
+
 void display(void)   // Creamos la funcion donde se dibuja
 {
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -963,6 +1160,8 @@ void display(void)   // Creamos la funcion donde se dibuja
 
 				//canica_uno(0.5, 30, 30, 0);
 				//canica_dos(0.5, 30, 30, 0);
+
+				flik(); //canica 3
 				
 				if (flag_luz == true)
 				{
