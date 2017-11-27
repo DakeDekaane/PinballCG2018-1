@@ -85,6 +85,14 @@ GLfloat light1_specular[] = { 1.0, 0.0, 0.0, 0.0 };
 GLfloat Pos[] = { 0.0, 90.0, 0.0, 1.0 };
 GLfloat PosUno[] = { 0.0, 0.0, 0.0, 1.0 };
 
+//luz_dos
+GLfloat light2_ambient[] = { 0.0, 0.0, 0.0, 0.0 };
+GLfloat light2_diffuse[] = { 0.0, 0.0, 0.5, 1.0 };
+GLfloat light2_specular[] = { 0.0, 0.0, 0.0, 0.0 };
+GLfloat PosDos[] = { 0.0, 00.0, 270.0, 1.0 };
+GLfloat PosDos_[] = { 0.0, 0.0, 0.0, 1.0 };
+
+
 //Texturas
 CTexture skybox1;
 CTexture skybox2;
@@ -97,7 +105,9 @@ CCamera objCamera;	//Create objet Camera
 GLfloat g_lookupdown = 0.0f;    // Look Position In The Z-Axis (NEW) 
 
 //flags
+bool flag_luz = true;
 bool flag_luz_uno = true;
+bool flag_luz_dos = true;
 
 //3ds
 CModel hongo3d;
@@ -267,9 +277,6 @@ void prisma_tr() {
 
 void prisma(GLint texture)
 {
-	
-
-
 	GLfloat vertice[8][3] = {
 		{ 0.5 ,-0.5, 0.5 },    //Coordenadas Vértice 0 V0
 		{ -0.5 ,-0.5, 0.5 },    //Coordenadas Vértice 1 V1
@@ -697,9 +704,25 @@ void luz_uno() {
 
 		glEnable(GL_LIGHT2);
 		glTranslatef(0, 130, 0);
-		foco(5, 30, 30, 0);
+		//foco(5, 30, 30, 0);
 	glPopMatrix();
 	//glDisable(GL_LIGHT2);
+}
+
+void luz_dos() {
+	glPushMatrix();
+	glLightfv(GL_LIGHT3, GL_AMBIENT, light2_ambient);
+	glLightfv(GL_LIGHT3, GL_DIFFUSE, light2_diffuse);
+	glLightfv(GL_LIGHT3, GL_SPECULAR, light2_specular);
+
+	glLightfv(GL_LIGHT3, GL_POSITION, PosDos);
+	glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, PosDos_);
+
+	glEnable(GL_LIGHT3);
+	glTranslatef(0, 30, 0);
+	//foco(5, 30, 30, 0);
+	glPopMatrix();
+	//glDisable(GL_LIGHT3);
 }
 
 void mesa_pinball() {
@@ -941,6 +964,13 @@ void display(void)   // Creamos la funcion donde se dibuja
 				//canica_uno(0.5, 30, 30, 0);
 				//canica_dos(0.5, 30, 30, 0);
 				
+				if (flag_luz == true)
+				{
+					glEnable(GL_LIGHTING);
+				}
+				else {
+					glDisable(GL_LIGHTING);
+				}
 				if (flag_luz_uno == true)
 				{
 					luz_uno();
@@ -948,6 +978,14 @@ void display(void)   // Creamos la funcion donde se dibuja
 				else {
 					glDisable(GL_LIGHT2);
 				}
+				if (flag_luz_dos == true)
+				{
+					luz_dos();
+				}
+				else {
+					glDisable(GL_LIGHT3);
+				}
+
 				vidrio(); //poner al final
 
 				glPopMatrix();
@@ -955,9 +993,6 @@ void display(void)   // Creamos la funcion donde se dibuja
 		glPopMatrix(); 
 
 	glPopMatrix();
-
-	
-
 	glutSwapBuffers();
 	// Swap The Buffers
 }
@@ -1007,6 +1042,17 @@ void keyboard(unsigned char key, int x, int y)  // Create Keyboard Function
 
 	case 'z':
 	case 'Z':
+		if (flag_luz == false)
+		{
+			flag_luz = true;
+		}
+		else
+		{
+			flag_luz = false;
+		}
+		break;
+	case 'x':
+	case 'X':
 		if (flag_luz_uno == true)
 		{
 			flag_luz_uno = false;
@@ -1014,6 +1060,17 @@ void keyboard(unsigned char key, int x, int y)  // Create Keyboard Function
 		else
 		{
 			flag_luz_uno = true;
+		}
+		break;
+	case 'c':
+	case 'C':
+		if (flag_luz_dos == true)
+		{
+			flag_luz_dos = false;
+		}
+		else
+		{
+			flag_luz_dos = true;
 		}
 		break;
 
