@@ -77,6 +77,12 @@ GLfloat flik_diffuse[] = { 0.09f,0.52f,1.0f,1.0f };
 GLfloat flik_specular[] = { 0.37f,0.56f,0.78f,1.0f };
 GLfloat flik_shininess[] = { 65.0f };
 
+//Flippers y resorte
+GLfloat silver_ambient[] = { 0.23125f, 0.23125f, 0.23125f, 1.0f };
+GLfloat silver_diffuse[] = { 0.2775f, 0.2775f, 0.2775f, 1.0f };
+GLfloat silver_specular[] = { 0.773911f, 0.773911f, 0.773911f, 1.0f };
+GLfloat silver_shininess[] = { 89.6f };
+
 //Iluminación
 GLfloat light_ambient[] = { 0.5, 0.5, 0.5, 1.0 };
 GLfloat light_diffuse[] = { 0.5, 0.5, 0.5, 1.0 };
@@ -96,7 +102,6 @@ GLfloat light2_specular[] = { 0.0, 0.0, 0.0, 0.0 };
 GLfloat PosDos[] = { 0.0, 00.0, 270.0, 1.0 };
 GLfloat PosDos_[] = { 0.0, 0.0, 0.0, 1.0 };
 
-
 //Texturas
 CTexture skybox1;
 CTexture skybox2;
@@ -113,13 +118,16 @@ bool flag_luz = true;
 bool flag_luz_uno = true;
 bool flag_luz_dos = true;
 
+bool flag_flipper_uno = true;
+bool flag_flipper_dos = true;
+bool flag_flipper_tres = true;
+
 //3ds
 CModel hongo3d;
 CModel pajaro3d;
 
 void InitGL(void)     // Inicializamos parametros
 {
-
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);				// Negro de fondo	
 
 	glEnable(GL_TEXTURE_2D);
@@ -631,7 +639,6 @@ void esfera(GLfloat radio, int meridianos, int paralelos, GLuint text)
 	}
 }
 
-
 void piedra(GLfloat radio, int meridianos, int paralelos, GLuint text)
 {
 	glMaterialfv(GL_FRONT, GL_AMBIENT, piedras_ambient);
@@ -1125,6 +1132,48 @@ void flik() {
 	glPopMatrix();
 }
 
+void flippers() {
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, silver_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, silver_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, silver_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, silver_shininess);
+
+	glPushMatrix();
+		glTranslatef(-5, 0, 50);
+		glRotatef(-90, 0, 0, 1);
+		if (flag_flipper_uno == false)
+		{
+			glRotatef(45, 1, 0, 0);
+		}
+		glScalef(1, 7, 1);
+		cilindro(50);
+	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(10, 0, 50);
+		glRotatef(90, 0, 0, 1);
+		if (flag_flipper_dos == false)
+		{
+			glRotatef(45, 1, 0, 0);
+		}
+		glScalef(1, 7, 1);
+		cilindro(50);
+	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(-5, 4, 42);
+		glRotatef(-90, 0, 0, 1);
+		glRotatef(45, 1, 0, 0);
+		if (flag_flipper_tres == false)
+		{
+			glRotatef(-45, 1, 0, 0);
+		}
+		glScalef(1, 7, 1);
+		cilindro(50);
+	glPopMatrix();
+}
+
 void display(void)   // Creamos la funcion donde se dibuja
 {
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1160,8 +1209,12 @@ void display(void)   // Creamos la funcion donde se dibuja
 
 				//canica_uno(0.5, 30, 30, 0);
 				//canica_dos(0.5, 30, 30, 0);
-
+				
 				flik(); //canica 3
+
+				flippers();
+
+				vidrio(); //poner al final
 				
 				if (flag_luz == true)
 				{
@@ -1185,7 +1238,6 @@ void display(void)   // Creamos la funcion donde se dibuja
 					glDisable(GL_LIGHT3);
 				}
 
-				vidrio(); //poner al final
 
 				glPopMatrix();
 			glColor3f(1.0,1.0,1.0);
@@ -1270,6 +1322,39 @@ void keyboard(unsigned char key, int x, int y)  // Create Keyboard Function
 		else
 		{
 			flag_luz_dos = true;
+		}
+		break;
+	case 'n':
+	case 'N':
+		if (flag_flipper_uno == true)
+		{
+			flag_flipper_uno = false;
+		}
+		else
+		{
+			flag_flipper_uno = true;
+		}
+		break;
+	case 'm':
+	case 'M':
+		if (flag_flipper_dos == true)
+		{
+			flag_flipper_dos = false;
+		}
+		else
+		{
+			flag_flipper_dos = true;
+		}
+		break;
+	case 'b':
+	case 'B':
+		if (flag_flipper_tres == true)
+		{
+			flag_flipper_tres = false;
+		}
+		else
+		{
+			flag_flipper_tres = true;
 		}
 		break;
 
