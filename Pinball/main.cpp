@@ -41,6 +41,25 @@ float transX = 0.0;
 float transY = 0.0;
 float transZ = -200.0;
 
+//Animaciones
+GLfloat escala_palanca = 1.0;
+GLfloat escala_resorte = 1.0;
+bool animacion_canica1 = false;
+enum estados_canica1 {
+	RESORTE1,
+	RESORTE2,
+	SUBE,
+	REBOTE1,
+	REBOTE2,
+	REBOTE3,
+	BAJA,
+	REGRESA
+};
+int estado_c1 = RESORTE1;
+float mov_c1_x = 0.0;
+float mov_c1_y = 0.0;
+float mov_c1_z = 0.0;
+
 //Materiales mesa
 GLfloat madera_ambient[] = { 0.79f,0.49f,0.16f,1.0f };			// Color background
 GLfloat madera_diffuse[] = { 0.5f,0.6f,0.75f,1.0f };			// Object Color main
@@ -108,6 +127,10 @@ CTexture skybox2;
 CTexture skybox3;
 CTexture skybox4;
 CTexture fondo;
+CTexture tablero_score;
+CTexture dot;
+CTexture heimlich;
+CTexture hopper;
 
 CCamera objCamera;	//Create objet Camera
 
@@ -118,13 +141,14 @@ bool flag_luz = true;
 bool flag_luz_uno = true;
 bool flag_luz_dos = true;
 
-bool flag_flipper_uno = true;
-bool flag_flipper_dos = true;
+bool flag_flipper_uno = false;
+bool flag_flipper_dos = false;
 bool flag_flipper_tres = true;
 
 //3ds
 CModel hongo3d;
 CModel pajaro3d;
+CModel resorte;
 
 void InitGL(void)     // Inicializamos parametros
 {
@@ -168,11 +192,28 @@ void InitGL(void)     // Inicializamos parametros
 	fondo.BuildGLTexture();
 	fondo.ReleaseImage();
 
+	tablero_score.LoadTGA("texturas/tablero_score.tga");
+	tablero_score.BuildGLTexture();
+	tablero_score.ReleaseImage();
+
+	dot.LoadTGA("texturas/dot.tga");
+	dot.BuildGLTexture();
+	dot.ReleaseImage();
+
+	heimlich.LoadTGA("texturas/Heimlich.tga");
+	heimlich.BuildGLTexture();
+	heimlich.ReleaseImage();
+
+	hopper.LoadTGA("texturas/hopper.tga");
+	hopper.BuildGLTexture();
+	hopper.ReleaseImage();
+
 	objCamera.Position_Camera(0, 200, 100, 0, 100, 0, 0, 1,0);
 
 	//3ds
 	hongo3d._3dsLoad("3ds/boletus.3ds");
 	pajaro3d._3dsLoad("3ds/CHICKDEE.3DS");
+	resorte._3dsLoad("3ds/spring.3DS");
 }
 
 //Primitivas 
@@ -287,7 +328,62 @@ void prisma_tr() {
 
 }
 
-void prisma(GLint texture)
+void prisma_tr(GLint texture) {
+	GLfloat vertice[6][3] = {
+		{ 0.0,0.0,0.5 },
+		{ 0.0,0.0,-0.5 },
+		{ 1.0,0.0,0.5 },
+		{ 1.0,0.0,-0.5 },
+		{ 0.0,1.0,0.5 },
+		{ 0.0,1.0,-0.5 }
+	};
+	glBegin(GL_POLYGON);	//Front		
+		glNormal3f(0.0f, 0.0f, 1.0f);
+		glVertex3fv(vertice[0]);
+		glVertex3fv(vertice[4]);
+		glVertex3fv(vertice[2]);
+	glEnd();
+	
+	glPushMatrix();
+		glDisable(GL_LIGHTING);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glBegin(GL_POLYGON);	//Right
+			glNormal3f(1.0f, 1.0f, 0.0f);
+			glTexCoord2f(0.0f, 0.0f); glVertex3fv(vertice[4]);
+			glTexCoord2f(1.0f, 0.0f); glVertex3fv(vertice[2]);
+			glTexCoord2f(1.0f, 1.0f); glVertex3fv(vertice[3]);
+			glTexCoord2f(0.0f, 1.0f); glVertex3fv(vertice[5]);
+		glEnd();
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	glBegin(GL_POLYGON);	//Back
+		glNormal3f(0.0f, 0.0f, -1.0f);
+		glVertex3fv(vertice[1]);
+		glVertex3fv(vertice[5]);
+		glVertex3fv(vertice[3]);
+	glEnd();
+
+	glBegin(GL_POLYGON);  //Left
+		glNormal3f(-1.0f, 0.0f, 0.0f);
+		glVertex3fv(vertice[0]);
+		glVertex3fv(vertice[1]);
+		glVertex3fv(vertice[5]);
+		glVertex3fv(vertice[4]);
+	glEnd();
+
+	glBegin(GL_POLYGON);  //Bottom
+		glNormal3f(0.0f, 0.0f, -1.0f);
+		glVertex3fv(vertice[0]);
+		glVertex3fv(vertice[1]);
+		glVertex3fv(vertice[3]);
+		glVertex3fv(vertice[2]);
+	glEnd();
+
+}
+
+void prisma(GLint texture,GLint mode)
 {
 	GLfloat vertice[8][3] = {
 		{ 0.5 ,-0.5, 0.5 },    //Coordenadas Vértice 0 V0
@@ -311,25 +407,41 @@ void prisma(GLint texture)
 		{ -0.5 ,0.2, 0.5 },    //Coordenadas Vértice 7 V7
 	};
 
-	glPushMatrix();
-		glDisable(GL_LIGHTING);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glBegin(GL_POLYGON);  //Top
-		glNormal3f(0.0f, 1.0f, 0.0f);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		
-		glTexCoord2f(1.0f, 0.0f); glVertex3fv(verticeDos[4]);
-		glTexCoord2f(1.0f, 1.0f); glVertex3fv(verticeDos[5]);
-		glTexCoord2f(0.0f, 1.0f); glVertex3fv(verticeDos[6]);
-		glTexCoord2f(0.0f, 0.0f); glVertex3fv(verticeDos[7]);
-		glEnd();
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glEnable(GL_LIGHTING);
-	glPopMatrix();
-	
-	
+	if (mode == 1) {
+		glPushMatrix();
+			glDisable(GL_LIGHTING);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glBegin(GL_POLYGON);  //Top
+			glNormal3f(0.0f, 1.0f, 0.0f);
+			glBindTexture(GL_TEXTURE_2D, texture);
 
+			glTexCoord2f(1.0f, 0.0f); glVertex3fv(verticeDos[4]);
+			glTexCoord2f(1.0f, 1.0f); glVertex3fv(verticeDos[5]);
+			glTexCoord2f(0.0f, 1.0f); glVertex3fv(verticeDos[6]);
+			glTexCoord2f(0.0f, 0.0f); glVertex3fv(verticeDos[7]);
+			glEnd();
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glEnable(GL_LIGHTING);
+		glPopMatrix();
+	}
+	else if (mode == 0) {
+		glPushMatrix();
+			glDisable(GL_LIGHTING);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glBegin(GL_POLYGON);  //Top
+			glNormal3f(0.0f, 1.0f, 0.0f);
+			glBindTexture(GL_TEXTURE_2D, texture);
 
+			glTexCoord2f(1.0f, 0.0f); glVertex3fv(vertice[4]);
+			glTexCoord2f(1.0f, 1.0f); glVertex3fv(vertice[5]);
+			glTexCoord2f(0.0f, 1.0f); glVertex3fv(vertice[6]);
+			glTexCoord2f(0.0f, 0.0f); glVertex3fv(vertice[7]);
+			glEnd();
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glEnable(GL_LIGHTING);
+		glPopMatrix();
+	}
+	
 	glBegin(GL_POLYGON);	//Front	
 	glNormal3f(0.0f, 0.0f, 1.0f);
 	glVertex3fv(vertice[0]);
@@ -792,87 +904,6 @@ void luz_dos() {
 	//glDisable(GL_LIGHT3);
 }
 
-void mesa_pinball() {
-	glMaterialfv(GL_FRONT, GL_AMBIENT, madera_ambient);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, madera_diffuse);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, madera_specular);
-	glMaterialfv(GL_FRONT, GL_SHININESS, madera_shininess);
-	glPushMatrix();
-		glRotatef(9.462, 1, 0, 0);
-		glPushMatrix();
-			glScalef(60, 41.099, 118.366);
-			prisma(fondo.GLindex);
-		glPopMatrix();
-		glPushMatrix();
-			glTranslatef(-30, 10.549, 49.183);
-			glRotatef(90, 0, 0, 1);
-			glScalef(5, 3, 5);
-			cilindro(30);
-		glPopMatrix();
-		glPushMatrix();
-			glTranslatef(30, 10.549, 49.183);
-			glRotatef(-90, 0, 0, 1);
-			glScalef(5, 3, 5);
-			cilindro(30);
-		glPopMatrix();
-		glPushMatrix();
-			glTranslatef(20, 10.549, 59.183);
-			glRotatef(90, 1, 0, 0);
-			glScalef(5, 3, 5);
-			cilindro(30);
-		glPopMatrix();
-	glPopMatrix();
-	glPushMatrix();
-		glTranslatef(0, -30, -61.576);
-		glPushMatrix();
-			glRotatef(-90, 0, 1, 0);
-			glScalef(116.756, 19.454, 60);
-			prisma_tr();
-		glPopMatrix();
-		glPushMatrix();
-			glTranslatef(-25, -60, 111.756);
-			glScalef(10, 60, 10);
-			cilindro(30);
-		glPopMatrix();
-		glPushMatrix();
-			glTranslatef(25, -60, 111.756);
-			glScalef(10, 60, 10);
-			cilindro(30);
-		glPopMatrix();
-	glPopMatrix();
-	glPushMatrix();
-		glTranslatef(0, 30, -61.576);
-		glPushMatrix();
-			glRotatef(-90, 0, 1, 0);
-			glRotatef(-90, 0, 0, 1);
-			glScalef(40.54, 6.756, 60);
-			prisma_tr();
-		glPopMatrix();
-		glPushMatrix();
-			glTranslatef(0, -30, -6.622);
-			glPushMatrix();
-				glScalef(60, 60, 13.244);
-				prisma();
-			glPopMatrix();
-			glPushMatrix();
-				glTranslatef(-25, -90, -1.622);
-				glScalef(10, 60, 10);
-				cilindro(30);
-			glPopMatrix();
-			glPushMatrix();
-				glTranslatef(25, -90, -1.622);
-				glScalef(10, 60, 10);
-				cilindro(30);
-			glPopMatrix();
-		glPopMatrix();
-		glPushMatrix();
-			glTranslatef(0, 35, -3.244);
-			glScalef(80, 70, 20);
-			prisma();
-		glPopMatrix();
-	glPopMatrix();
-}
-
 void vidrio() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1132,6 +1163,17 @@ void flik() {
 	glPopMatrix();
 }
 
+void spring() {
+	glEnable(GL_COLOR_MATERIAL);
+
+	glPushMatrix();
+		glScalef(1, 1, 1);
+		resorte.GLrender(NULL, _SHADED, 1.0);
+	glPopMatrix();
+
+	glDisable(GL_COLOR_MATERIAL);
+}
+
 void flippers() {
 
 	glMaterialfv(GL_FRONT, GL_AMBIENT, silver_ambient);
@@ -1140,37 +1182,266 @@ void flippers() {
 	glMaterialfv(GL_FRONT, GL_SHININESS, silver_shininess);
 
 	glPushMatrix();
-		glTranslatef(-5, 0, 50);
+		glTranslatef(-5, 3, 45);
 		glRotatef(-90, 0, 0, 1);
 		if (flag_flipper_uno == false)
 		{
 			glRotatef(45, 1, 0, 0);
 		}
-		glScalef(1, 7, 1);
+		glScalef(2, 7, 2);
 		cilindro(50);
 	glPopMatrix();
 
 	glPushMatrix();
-		glTranslatef(10, 0, 50);
+		glTranslatef(10, 3, 45);
 		glRotatef(90, 0, 0, 1);
 		if (flag_flipper_dos == false)
 		{
 			glRotatef(45, 1, 0, 0);
 		}
-		glScalef(1, 7, 1);
+		glScalef(2, 7, 2);
 		cilindro(50);
 	glPopMatrix();
 
 	glPushMatrix();
-		glTranslatef(-5, 4, 42);
+		glTranslatef(-20, 3, 37);
 		glRotatef(-90, 0, 0, 1);
 		glRotatef(45, 1, 0, 0);
 		if (flag_flipper_tres == false)
 		{
 			glRotatef(-45, 1, 0, 0);
 		}
-		glScalef(1, 7, 1);
+		glScalef(2, 7, 2);
 		cilindro(50);
+	glPopMatrix();
+}
+
+void canal(int resolucion) {
+	GLint i;
+	GLfloat theta, thetan;
+	GLfloat centro_base[] = { 0.0,0.0,0.0 };
+
+	for (i = 0; i < resolucion / 2; i++) {
+		theta = (2 * PI * i / resolucion);
+		thetan = (2 * PI * (i + 1) / resolucion);
+		glBegin(GL_POLYGON);
+			glNormal3f(0.5*cos(theta), 0.0f, 0.5*sin(theta));
+			glVertex3f(0.5*cos(theta), 0, 0.5*sin(theta));
+			glVertex3f(0.5*cos(theta), 1, 0.5*sin(theta));
+			glVertex3f(0.5*cos(thetan), 1, 0.5*sin(thetan));
+			glVertex3f(0.5*cos(thetan), 0, 0.5*sin(thetan));
+		glEnd();
+		glBegin(GL_POLYGON);
+			glNormal3f(0.0f, 0.0f, -1.0f);
+			glVertex3f(0.5*cos(theta), 0, 0.5*sin(theta));
+			glVertex3fv(centro_base);
+			glVertex3f(0.5*cos(thetan), 0, 0.5*sin(thetan));
+		glEnd();
+		
+	}
+}
+
+void mesa_pinball() {
+	glMaterialfv(GL_FRONT, GL_AMBIENT, madera_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, madera_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, madera_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, madera_shininess);
+	glPushMatrix();
+		glRotatef(9.462, 1, 0, 0);
+		//Caja principal
+		glPushMatrix();
+			glScalef(60, 41.099, 118.366);
+			prisma(fondo.GLindex,1);
+		glPopMatrix();
+		//Estructuras adicionales
+		for (int i = 0; i < 10; i++) {
+			glPushMatrix();
+				glTranslatef(27, 8.11, -53.2647 + 11.8366 * i);
+				glPushMatrix();
+					glTranslatef(0, 4.06, 0);
+					glScalef(6, 0.1, 11.8366);
+					glEnable(GL_ALPHA_TEST);
+					glAlphaFunc(GL_GREATER, 0.1);
+					prisma(dot.GLindex, 0);
+					glDisable(GL_ALPHA_TEST);
+				glPopMatrix();
+				glScalef(6, 8, 11.8366);
+				prisma();
+			glPopMatrix();
+			glPushMatrix();
+				glTranslatef(-27, 8.11, -53.2647 + 11.8366 * i);
+				glPushMatrix();
+					glTranslatef(0, 4.06, 0);
+					glScalef(6, 0.1, 11.8366);
+					glEnable(GL_ALPHA_TEST);
+					glAlphaFunc(GL_GREATER, 0.1);
+					prisma(dot.GLindex, 0);
+					glDisable(GL_ALPHA_TEST);
+				glPopMatrix();
+				glScalef(6, 8, 11.8366);
+				prisma();
+			glPopMatrix();
+		}
+		glPushMatrix();
+			glTranslatef(-14, 8.11, 54.183);
+			glPushMatrix();
+				glTranslatef(0, 4.06, 0);
+				glScalef(20, 0.1, 10);
+				glEnable(GL_ALPHA_TEST);
+				glAlphaFunc(GL_GREATER, 0.1);
+				prisma(heimlich.GLindex, 0);
+				glDisable(GL_ALPHA_TEST);
+			glPopMatrix();
+			glScalef(20, 8, 10);
+			prisma();
+		glPopMatrix();
+		glPushMatrix();
+			glTranslatef(7, 8.11, 55.683);
+			glPushMatrix();
+				glTranslatef(0, 4.06, 0);
+				glScalef(22, 0.1, 7);
+				glEnable(GL_ALPHA_TEST);
+				glAlphaFunc(GL_GREATER, 0.1);
+				prisma(heimlich.GLindex, 0);
+				glDisable(GL_ALPHA_TEST);
+			glPopMatrix();
+			glScalef(22, 8, 7);
+			prisma();
+		glPopMatrix();
+		glPushMatrix();
+			glTranslatef(-24, 8.11, 49.183);
+			glRotatef(-90, 1, 0, 0);
+			glScalef(20, 10, 8);
+			prisma_tr();
+		glPopMatrix();
+		glPushMatrix();
+			glTranslatef(18, 8.11, 49.183);
+			glRotatef(-90, 1, 0, 0);
+			glRotatef(180, 0, 1, 0);
+			glScalef(10, 10, 8);
+			prisma_tr();
+		glPopMatrix();
+		glPushMatrix();
+			glTranslatef(-14, 8.11, 54.183);
+			glPushMatrix();
+				glTranslatef(0, 4.06, 0);
+				glScalef(20, 0.1, 10);
+				glEnable(GL_ALPHA_TEST);
+				glAlphaFunc(GL_GREATER, 0.1);
+				prisma(heimlich.GLindex, 0);
+				glDisable(GL_ALPHA_TEST);
+			glPopMatrix();
+			glScalef(20, 8, 10);
+			prisma();
+		glPopMatrix();
+		glPushMatrix();
+			glTranslatef(27, 8.11, -59.183);
+			glRotatef(90, 1, 0, 0);
+			glRotatef(90, 0, 0, 1);
+			glScalef(10, 10, 8);
+			prisma_tr(hopper.GLindex);
+		glPopMatrix();
+		//Botones flippers
+		glPushMatrix();
+			glTranslatef(-30, 10.549, 49.183);
+			glRotatef(90, 0, 0, 1);
+			glScalef(5, 3, 5);
+			cilindro(30);
+		glPopMatrix();
+		glPushMatrix();
+			glTranslatef(30, 10.549, 49.183);
+			glRotatef(-90, 0, 0, 1);
+			glScalef(5, 3, 5);
+			cilindro(30);
+		glPopMatrix();
+		//Palanca resorte
+		glPushMatrix();
+			glTranslatef(20, 10, 57.183);
+			glPushMatrix();
+				glRotatef(90, 1, 0, 0);
+				glPushMatrix();
+					glTranslatef(0, 4 - 4 * (1 - escala_palanca), 0);
+					glScalef(5, 3, 5);
+					cilindro(30);
+				glPopMatrix();
+				glScalef(3, 4*escala_palanca, 3);
+				cilindro(30);
+			glPopMatrix();
+			glPushMatrix();
+				glPushMatrix();
+					glTranslatef(-1.15, 0, 0);
+					glScalef(0.3, 0.3, 0.25*escala_resorte);
+					spring();
+				glPopMatrix();
+				glPushMatrix();
+					glRotatef(-90, 1, 0, 0);
+					glRotatef(180, 0, 1, 0);
+					glScalef(3.3,100,3.3);
+					canal(30);
+				glPopMatrix();				
+				glMaterialfv(GL_FRONT, GL_AMBIENT, madera_ambient);
+				glMaterialfv(GL_FRONT, GL_DIFFUSE, madera_diffuse);
+				glMaterialfv(GL_FRONT, GL_SPECULAR, madera_specular);
+				glMaterialfv(GL_FRONT, GL_SHININESS, madera_shininess);
+				
+			glPopMatrix();
+		glPopMatrix();
+	glPopMatrix();
+	glPushMatrix();
+		glTranslatef(0, -30, -61.576);
+		//Base
+		glPushMatrix();
+			glRotatef(-90, 0, 1, 0);
+			glScalef(116.756, 19.454, 60);
+			prisma_tr();
+		glPopMatrix();
+		//Patas delanteras
+		glPushMatrix();
+			glTranslatef(-25, -60, 111.756);
+			glScalef(10, 60, 10);
+			cilindro(30);
+		glPopMatrix();
+		glPushMatrix();
+			glTranslatef(25, -60, 111.756);
+			glScalef(10, 60, 10);
+			cilindro(30);
+		glPopMatrix();
+	glPopMatrix();
+	glPushMatrix();
+		glTranslatef(0, 30, -61.576);
+		//Base
+		glPushMatrix();
+			glRotatef(-90, 0, 1, 0);
+			glRotatef(-90, 0, 0, 1);
+			glScalef(40.54, 6.756, 60);
+			prisma_tr();
+		glPopMatrix();
+		glPushMatrix();
+			glTranslatef(0, -30, -6.622);
+			//Base
+			glPushMatrix();
+				glScalef(60, 60, 13.244);
+				prisma();
+			glPopMatrix();
+			//Patas traseras
+			glPushMatrix();
+				glTranslatef(-25, -90, -1.622);
+				glScalef(10, 60, 10);
+				cilindro(30);
+			glPopMatrix();
+			glPushMatrix();
+				glTranslatef(25, -90, -1.622);
+				glScalef(10, 60, 10);
+				cilindro(30);
+			glPopMatrix();
+		glPopMatrix();
+		//Tablero score
+		glPushMatrix();
+			glTranslatef(0, 35, -3.244);
+			glRotatef(90, 1, 0, 0);
+			glScalef(80, 20, 70);
+			prisma(tablero_score.GLindex,0);
+		glPopMatrix();
 	glPopMatrix();
 }
 
@@ -1206,15 +1477,25 @@ void display(void)   // Creamos la funcion donde se dibuja
 
 				pajaro_uno();
 				pajaro_dos();
-
-				//canica_uno(0.5, 30, 30, 0);
+				glPushMatrix();
+					glRotatef(9.462, 1, 0, 0);
+					glTranslatef(20 + mov_c1_x, 10 + mov_c1_y, 50.5 + mov_c1_z);
+					glScalef(3, 3, 3);
+					canica_uno(0.5, 30, 30, 0);
+				glPopMatrix();
+				
 				//canica_dos(0.5, 30, 30, 0);
 				
 				flik(); //canica 3
 
 				flippers();
 
+				
+				
+
 				vidrio(); //poner al final
+
+				
 				
 				if (flag_luz == true)
 				{
@@ -1248,6 +1529,37 @@ void display(void)   // Creamos la funcion donde se dibuja
 	// Swap The Buffers
 }
 
+void animacion() {
+	if (animacion_canica1) {
+		switch (estado_c1) {
+		case RESORTE1:
+			escala_resorte -= 0.05;
+			escala_palanca += 0.025;
+			mov_c1_z += 0.25;
+			if (escala_resorte < 0.5) {
+				estado_c1 = RESORTE2;
+			}
+			break;
+		case RESORTE2:
+			escala_resorte += 0.1;
+			escala_palanca -= 0.05;
+			mov_c1_z -= 0.5;
+			if (escala_resorte > 1) {	
+				estado_c1 = SUBE;
+			}
+			break;
+		case SUBE:
+			mov_c1_z -= 1;
+			if (mov_c1_z < -104) {
+				animacion_canica1 = false;
+				estado_c1 = RESORTE1;
+			}
+			break;
+		}
+	}
+	glutPostRedisplay();
+}
+
 void reshape(int width, int height)   // Creamos funcion Reshape
 {
 	if (height == 0)										// Prevenir division entre cero
@@ -1273,22 +1585,22 @@ void keyboard(unsigned char key, int x, int y)  // Create Keyboard Function
 
 	case 'w':   //Movimientos de camara
 	case 'W':
-		objCamera.Move_Camera(CAMERASPEED + 0.2);
+		objCamera.Move_Camera(CAMERASPEED/4);
 		break;
 
 	case 's':
 	case 'S':
-		objCamera.Move_Camera(-(CAMERASPEED + 0.2));
+		objCamera.Move_Camera(-CAMERASPEED/4);
 		break;
 
 	case 'a':
 	case 'A':
-		objCamera.Strafe_Camera(-(CAMERASPEED + 0.4));
+		objCamera.Strafe_Camera(-CAMERASPEED/2);
 		break;
 
 	case 'd':
 	case 'D':
-		objCamera.Strafe_Camera(CAMERASPEED + 0.4);
+		objCamera.Strafe_Camera(CAMERASPEED/2);
 		break;
 
 	case 'z':
@@ -1372,11 +1684,11 @@ void arrow_keys(int a_keys, int x, int y)  // Funcion para manejo de teclas espe
 {
 	switch (a_keys) {
 	case GLUT_KEY_PAGE_UP:
-		objCamera.UpDown_Camera(CAMERASPEED + 0.2);
+		objCamera.UpDown_Camera(CAMERASPEED);
 		break;
 
 	case GLUT_KEY_PAGE_DOWN:
-		objCamera.UpDown_Camera(-CAMERASPEED - 0.2);
+		objCamera.UpDown_Camera(-CAMERASPEED);
 		break;
 
 	case GLUT_KEY_UP:     // Presionamos tecla ARRIBA...
@@ -1401,6 +1713,12 @@ void arrow_keys(int a_keys, int x, int y)  // Funcion para manejo de teclas espe
 	glutPostRedisplay();
 }
 
+void raton(int button, int state, int x, int y) {
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_UP) {
+		animacion_canica1 = !animacion_canica1;
+	}
+}
+
 int main(int argc, char** argv)   // Main Function
 {
 	glutInit(&argc, argv); // Inicializamos OpenGL
@@ -1413,6 +1731,8 @@ int main(int argc, char** argv)   // Main Function
 	glutReshapeFunc(reshape);	//Indicamos a Glut función en caso de cambio de tamano
 	glutKeyboardFunc(keyboard);	//Indicamos a Glut función de manejo de teclado
 	glutSpecialFunc(arrow_keys);	//Otras
+	glutIdleFunc(animacion);
+	glutMouseFunc(raton);
 	glutMainLoop();          // 
 
 	return 0;
