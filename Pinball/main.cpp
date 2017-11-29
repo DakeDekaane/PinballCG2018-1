@@ -57,9 +57,11 @@ enum estados_canica1 {
 };
 int estado_c1 = RESORTE1;
 float mov_c1_x = 0.0;
-float mov_c1_y = 0.0;
 float mov_c1_z = 0.0;
 
+//Personaje
+float personajeX = 0.0;
+float personajeZ = 0.0;
 //Materiales mesa
 GLfloat madera_ambient[] = { 0.79f,0.49f,0.16f,1.0f };			// Color background
 GLfloat madera_diffuse[] = { 0.5f,0.6f,0.75f,1.0f };			// Object Color main
@@ -1047,12 +1049,12 @@ void flik() {
 
 	glPushMatrix();
 	glScalef(0.3, 0.3, 0.3);
-	glTranslatef(70.0, 4.5, 190.0);
+	glTranslatef(40.0, 10, 150.0);
 
 	// Cuerpo
 	glPushMatrix();
 
-	glTranslatef(-2.0f, 0.0f, transZ);
+	glTranslatef(-2.0f, 0.0f, 0);
 
 	glPushMatrix(); //brazo der
 	glTranslatef(0.3f, 0.0f, 0.0);
@@ -1193,7 +1195,7 @@ void flippers() {
 	glPopMatrix();
 
 	glPushMatrix();
-		glTranslatef(10, 3, 45);
+		glTranslatef(9, 3, 45);
 		glRotatef(90, 0, 0, 1);
 		if (flag_flipper_dos == false)
 		{
@@ -1479,15 +1481,18 @@ void display(void)   // Creamos la funcion donde se dibuja
 				pajaro_dos();
 				glPushMatrix();
 					glRotatef(9.462, 1, 0, 0);
-					glTranslatef(20 + mov_c1_x, 10 + mov_c1_y, 50.5 + mov_c1_z);
+					glTranslatef(20 + mov_c1_x, 10, 50.5 + mov_c1_z);
 					glScalef(3, 3, 3);
 					canica_uno(0.5, 30, 30, 0);
 				glPopMatrix();
 				
 				//canica_dos(0.5, 30, 30, 0);
 				
-				flik(); //canica 3
-
+				glPushMatrix();
+					glRotatef(9.462, 1, 0, 0);
+					glTranslatef(personajeX, 7, - 5 + personajeZ);
+					flik(); //canica 3
+				glPopMatrix();
 				flippers();
 
 				
@@ -1541,21 +1546,60 @@ void animacion() {
 			}
 			break;
 		case RESORTE2:
-			escala_resorte += 0.1;
-			escala_palanca -= 0.05;
-			mov_c1_z -= 0.5;
-			if (escala_resorte > 1) {	
+			escala_resorte += 0.2;
+			escala_palanca -= 0.1;
+			mov_c1_z -= 1;
+			if (escala_resorte > 1) {
+				escala_resorte = 1.0;
+				escala_palanca = 1.0;
 				estado_c1 = SUBE;
 			}
 			break;
 		case SUBE:
-			mov_c1_z -= 1;
+			mov_c1_z -= 2;
 			if (mov_c1_z < -104) {
+				estado_c1 = REBOTE1;
+			}
+			break;
+		case REBOTE1:
+			mov_c1_z += 0.38;
+			mov_c1_x -= 1;
+			if (mov_c1_x < -36) {
+				estado_c1 = REBOTE2;
+			}
+			break;
+		case REBOTE2:
+			mov_c1_z += 0.98;
+			mov_c1_x += 0.3;
+			if (mov_c1_x > -31) {
+				estado_c1 = REBOTE3;
+			}
+			break;
+		case REBOTE3:
+			mov_c1_z -= 0.6;
+			mov_c1_x += 1.8;
+			if (mov_c1_x > -13) {
+				estado_c1 = BAJA;
+			}
+			break;
+		case BAJA:
+			mov_c1_z += 2;
+			mov_c1_x -= 0.145;
+			if (mov_c1_x < -18.1) {
+				estado_c1 = REGRESA;
+			}
+			break;
+		case REGRESA:
+			mov_c1_x += 1;
+			if (mov_c1_x > 0 ) {
+				mov_c1_x = 0.0f;
+				mov_c1_z = 0.0f;
 				animacion_canica1 = false;
 				estado_c1 = RESORTE1;
 			}
 			break;
 		}
+
 	}
 	glutPostRedisplay();
 }
@@ -1583,23 +1627,39 @@ void keyboard(unsigned char key, int x, int y)  // Create Keyboard Function
 {
 	switch (key) {
 
-	case 'w':   //Movimientos de camara
+	case 'w':
 	case 'W':
+		personajeZ -= 2;
+		break;
+	case 's':
+	case 'S':
+		personajeZ += 2;
+		break;
+	case 'a':
+	case 'A':
+		personajeX -= 2;
+		break;
+	case 'd':
+	case 'D':
+		personajeX += 2;
+		break;
+	case 'T':   //Movimientos de camara
+	case 't':
 		objCamera.Move_Camera(CAMERASPEED/4);
 		break;
 
-	case 's':
-	case 'S':
+	case 'G':
+	case 'g':
 		objCamera.Move_Camera(-CAMERASPEED/4);
 		break;
 
-	case 'a':
-	case 'A':
+	case 'F':
+	case 'f':
 		objCamera.Strafe_Camera(-CAMERASPEED/2);
 		break;
 
-	case 'd':
-	case 'D':
+	case 'H':
+	case 'h':
 		objCamera.Strafe_Camera(CAMERASPEED/2);
 		break;
 
@@ -1723,7 +1783,7 @@ int main(int argc, char** argv)   // Main Function
 {
 	glutInit(&argc, argv); // Inicializamos OpenGL
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH); // Display Mode (Clores RGB y alpha | Buffer Doble )
-	glutInitWindowSize(500, 500);	// Tamaño de la Ventana
+	glutInitWindowSize(1024, 768);	// Tamaño de la Ventana
 	glutInitWindowPosition(0, 0);	//Posicion de la Ventana
 	glutCreateWindow("Pinball"); // Nombre de la Ventana
 	InitGL();						// Parametros iniciales de la aplicacion
